@@ -1,0 +1,21 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual env
+.venv/
+venv/
+
+# Env vars
+.env
+
+# Local config
+.python-version
+
+# Modern Python tools (not using)
+pyproject.toml
+uv.lock
