@@ -1,104 +1,148 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 import json
-from datetime import datetime, timezone
 import os
+from datetime import datetime, timezone
 
 app = Flask(__name__)
-
 LOG_FILE = "email_logs.ndjson"
+
 
 def now():
     return datetime.now(timezone.utc).isoformat()
 
 
-def normalize_message_id(mid):
-    if not mid:
-        return None
-    return mid.replace("<", "").replace(">", "").strip()
-
-
-def ensure_log_file():
-    """Make sure file exists (important for Render)"""
+def load_records():
+    records = {}
     if not os.path.exists(LOG_FILE):
-        open(LOG_FILE, "w").close()
+        return records
+    with open(LOG_FILE, "r") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                rec = json.loads(line)
+                records[rec["id"]] = rec
+    return records
 
 
+def save_records(records):
+    with open(LOG_FILE, "w") as f:
+        for rec in records.values():
+            f.write(json.dumps(rec) + "\n")
 
-def update_record(message_id, event_type):
-    ensure_log_file()
 
-    message_id = normalize_message_id(message_id)
+def find_record_by_message_id(records, message_id):
+    for rec in records.values():
+        if rec["status"].get("message_id") == message_id:
+            return rec
+    return None
 
-    updated_lines = []
 
-    try:
-        with open(LOG_FILE, "r") as f:
-            lines = f.readlines()
-    except Exception as e:
-        print("ERROR reading log file:", e)
-        return
+# ─── Brevo Webhook Endpoint ───────────────────────────────────────────────────
+@app.route("/brevo/webhook", methods=["POST"])
+def brevo_webhook():
+    events = request.json  # Brevo sends a list of event objects
 
-    for line in lines:
-        if not line.strip():
+    if not events:
+        return jsonify({"status": "no events"}), 200
+
+    # Brevo can send a single dict or a list
+    if isinstance(events, dict):
+        events = [events]
+
+    records = load_records()
+
+    for event in events:
+        event_type = event.get("event")          # "delivered", "opened", "click", "reply", "bounce", "spam"
+        message_id = event.get("message-id") or event.get("MessageId")
+        email_addr = event.get("email")
+        ts = event.get("date") or now()
+
+        print(f"[Webhook] event={event_type} | message_id={message_id} | email={email_addr}")
+
+        rec = find_record_by_message_id(records, message_id)
+        if not rec:
+            print(f"  → No matching record found for message_id={message_id}")
             continue
 
-        try:
-            record = json.loads(line)
-        except Exception as e:
-            print("Skipping corrupt line:", e)
-            continue
+        if event_type == "delivered":
+            rec["status"]["delivered"] = True
+            rec["timestamps"]["delivered"] = ts
 
-        stored_id = normalize_message_id(
-            record.get("status", {}).get("message_id")
-        )
+        elif event_type == "opened" or event_type == "unique_opened":
+            rec["status"]["opened"] = True
+            rec["timestamps"]["opened"] = ts
 
-   
-        if stored_id == message_id:
+        elif event_type == "click":
+            rec["status"]["clicked"] = True
+            rec["timestamps"]["clicked"] = ts
 
-    
-            if event_type in ["delivered"]:
-                record["status"]["delivered"] = True
-                record["timestamps"]["delivered"] = now()
+        elif event_type in ("bounce", "hard_bounce", "soft_bounce"):
+            rec["status"]["bounced"] = True
+            rec["status"]["bounce_type"] = event_type
+            rec["timestamps"]["bounced"] = ts
 
-     
-            if event_type in ["opened", "unique_opened", "first_opening"]:
-                record["status"]["opened"] = True
-                record["timestamps"]["opened"] = now()
+        elif event_type == "spam":
+            rec["status"]["spam"] = True
+            rec["timestamps"]["spam"] = ts
 
-        updated_lines.append(json.dumps(record))
-    try:
-        with open(LOG_FILE, "w") as f:
-            f.write("\n".join(updated_lines))
-    except Exception as e:
-        print("ERROR writing log file:", e)
+        elif event_type == "unsubscribe":
+            rec["status"]["unsubscribed"] = True
+            rec["timestamps"]["unsubscribed"] = ts
 
-@app.route("/brevo-webhook", methods=["POST"])
-def webhook():
-    data = request.get_json()
+        records[rec["id"]] = rec
 
-    print("\nRAW WEBHOOK:", data)
-
-    event = data.get("event")
-    message_id = (
-        data.get("message-id")
-        or data.get("messageId")
-        or data.get("message_id")
-    )
-
-    print("EVENT:", event)
-    print("MESSAGE_ID:", message_id)
-
-    if event and message_id:
-        update_record(message_id, event)
-    else:
-        print("Missing event or message_id")
-
-    return {"status": "ok"}, 200
+    save_records(records)
+    return jsonify({"status": "ok", "processed": len(events)}), 200
 
 
-@app.route("/")
-def home():
-    return "Webhook running", 200
+# ─── Metrics Endpoint ─────────────────────────────────────────────────────────
+@app.route("/metrics", methods=["GET"])
+def metrics():
+    records = load_records()
+    total = len(records)
+
+    if total == 0:
+        return jsonify({"message": "No records found"}), 200
+
+    sent       = sum(1 for r in records.values() if r["status"].get("sent"))
+    delivered  = sum(1 for r in records.values() if r["status"].get("delivered"))
+    opened     = sum(1 for r in records.values() if r["status"].get("opened"))
+    clicked    = sum(1 for r in records.values() if r["status"].get("clicked"))
+    replied    = sum(1 for r in records.values() if r["status"].get("replied"))
+    bounced    = sum(1 for r in records.values() if r["status"].get("bounced"))
+    spam       = sum(1 for r in records.values() if r["status"].get("spam"))
+
+    def rate(n):
+        return round((n / sent * 100), 1) if sent > 0 else 0
+
+    return jsonify({
+        "total_records": total,
+        "sent": sent,
+        "delivered": delivered,
+        "opened": opened,
+        "clicked": clicked,
+        "replied": replied,
+        "bounced": bounced,
+        "spam": spam,
+        "rates": {
+            "delivery_rate":  f"{rate(delivered)}%",
+            "open_rate":      f"{rate(opened)}%",
+            "click_rate":     f"{rate(clicked)}%",
+            "reply_rate":     f"{rate(replied)}%",
+            "bounce_rate":    f"{rate(bounced)}%",
+        }
+    }), 200
+
+
+# ─── Per-lead status lookup ────────────────────────────────────────────────────
+@app.route("/status/<email>", methods=["GET"])
+def status_by_email(email):
+    records = load_records()
+    matches = [r for r in records.values() if r["email"] == email]
+    if not matches:
+        return jsonify({"message": "No records found for this email"}), 404
+    return jsonify(matches), 200
+
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5001)
+    app.run(port=5050, debug=True)
