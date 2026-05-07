@@ -96,7 +96,7 @@ export async function generateEmail(lead) {
             [THIRD LINE — soft CTA related to ${lead.goal}]
           </p>
     
-          <a href="https://www.hamroaadhiyan.com" style="display:inline-block;background:#4F46E5;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:8px;font-size:15px;font-weight:bold;">
+          <a href="https://hamro-aadhiyan.vercel.app/" style="display:inline-block;background:#4F46E5;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:8px;font-size:15px;font-weight:bold;">
             Check Hamro Aadhiyan
           </a>
         </div>
@@ -104,7 +104,7 @@ export async function generateEmail(lead) {
         <div style="padding:20px 28px;border-top:1px solid #f0f0f0;background:#fafafa;">
           <p style="margin:0;font-size:14px;font-weight:bold;color:#1a1a1a;">Prasanna Niroula</p>
           <p style="margin:4px 0 0;font-size:13px;color:#6b7280;">CEO, Hamro Aadhiyan</p>
-          <a href="https://www.hamroaadhiyan.com" style="font-size:13px;color:#4F46E5;text-decoration:none;">www.hamroaadhiyan.com</a>
+          <a href="https://hamro-aadhiyan.vercel.app/" style="font-size:13px;color:#4F46E5;text-decoration:none;">hamro-aadhiyan.vercel.app/</a>
         </div>
     
       </div>
