@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import emailRouter from './routes/emailRoute.js'
+import webhookRouter from './routes/webhookRoute.js'
 
 dotenv.config()
 
@@ -12,6 +13,7 @@ app.use(cors())
 app.use(express.json())
 
 app.use('/email',emailRouter)
+app.use('/webhook', webhookRouter)
 app.get('/', (req, res) => {
     res.json({ message: 'Server is running' })
 })
