@@ -1,6 +1,7 @@
 import { generateEmail } from "../services/emailgenerator.js";
 import { evaluateEmail } from "../services/emailevaluator.js";
 import { sendEmail } from "../services/emailsender.js";
+import Lead from '../models/Lead.js'
 
 export async function sendColdEmail(req, res) {
     const { name, role, goal, email } = req.body
@@ -10,13 +11,34 @@ export async function sendColdEmail(req, res) {
         })
     }
     try {
-        const generated = await generateEmail({ name, role, goal })
-    
-        const evaluated = await evaluateEmail(generated.emails)
 
+        const generated = await generateEmail({ name, role, goal })
+        
+        
+        const evaluated = await evaluateEmail(generated.emails)
+        
+        
         const subject = `Quick help for ${role}`
         const result = await sendEmail(email, name, subject, evaluated.final_email)
     
+        
+        const lead = new Lead({
+            name,
+            email,
+            role,
+            goal,
+            subject,
+            body: evaluated.final_email,
+            status: {
+                sent: result.success,
+                messageId: result.messageId
+            },
+            timestamps: {
+                sent: new Date().toISOString()
+            }
+        })
+    
+        await lead.save()
         res.status(200).json({
             success: true,
             messageId: result.messageId,
