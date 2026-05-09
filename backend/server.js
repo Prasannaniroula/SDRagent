@@ -5,6 +5,7 @@ import emailRouter from './routes/emailRoute.js'
 import webhookRouter from './routes/webhookRoute.js'
 import { connectDB } from './db.js'
 import metricsRouter from './routes/metricsRoute.js'
+import leadRouter from './routes/LeadRoute.js'
 
 dotenv.config()
 
@@ -17,6 +18,7 @@ app.use(express.json())
 app.use('/email',emailRouter)
 app.use('/webhook', webhookRouter)
 app.use('/metrics', metricsRouter)
+app.use('/leads', leadRouter)
 app.get('/', (req, res) => {
     res.json({ message: 'Server is running' })
 })
