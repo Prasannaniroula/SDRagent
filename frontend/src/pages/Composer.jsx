@@ -1,51 +1,16 @@
+import React from 'react'
 import { useState } from 'react'
 import axios from 'axios'
-import { useTheme } from '../Context/ThemeContext'
 
-export default function Composer() {
-  const { isDark } = useTheme()
+function Composer() {
 
   const [form, setForm] = useState({
     name: '',
     role: '',
     goal: '',
     email: ''
-  })
-
-  const [step, setStep] = useState(1)
-  const [loading, setLoading] = useState(false)
-  const [preview, setPreview] = useState(null)
-  const [reason, setReason] = useState('')
-  const [messageId, setMessageId] = useState(null)
-  const [error, setError] = useState(null)
-
-  function handleChange(e) {
-    setForm({ ...form, [e.target.name]: e.target.value })
-  }
-
-  async function handleGenerate() {
-    if (!form.name || !form.role || !form.goal || !form.email) {
-        setError('Please fill in all fields!')
-        return
-    }
-
-    setLoading(true)
-    setError(null)
-
-    try {
-        const res = await axios.post(
-            `${import.meta.env.VITE_API_URL}/email/generate`,
-            form
-        )
-        setPreview(res.data.finalEmail)
-        setReason(res.data.reason)
-        setStep(2)
-    } catch (err) {
-        setError('Failed to generate email. Please try again!')
-    } finally {
-        setLoading(false)
-    }
-}
+})
+  const[loading, setLoading] = useState
 
   return (
     <div className="max-w-3xl mx-auto">
