@@ -4,31 +4,34 @@ import { sendEmail } from "../services/emailsender.js";
 import Lead from '../models/Lead.js'
 
 export async function sendColdEmail(req, res) {
-    const { name, role, goal, email } = req.body
+    const { name, role, goal, email, finalEmail } = req.body
+
     if (!name || !role || !goal || !email) {
-        return res.status(400).json({ 
-            error: "Please provide name, role, goal and email" 
+        return res.status(400).json({
+            error: "Please provide name, role, goal and email"
         })
     }
-    try {
 
-        const generated = await generateEmail({ name, role, goal })
-        
-        
-        const evaluated = await evaluateEmail(generated.emails)
-        
-        
+    try {
+        let emailToSend = finalEmail
+
+        // If no finalEmail provided generate a new one
+        if (!emailToSend) {
+            const generated = await generateEmail({ name, role, goal })
+            const evaluated = await evaluateEmail(generated.emails)
+            emailToSend = evaluated.final_email
+        }
+
         const subject = `Quick help for ${role}`
-        const result = await sendEmail(email, name, subject, evaluated.final_email)
-    
-        
+        const result = await sendEmail(email, name, subject, emailToSend)
+
         const lead = new Lead({
             name,
             email,
             role,
             goal,
             subject,
-            body: evaluated.final_email,
+            body: emailToSend,
             status: {
                 sent: result.success,
                 messageId: result.messageId
@@ -37,14 +40,14 @@ export async function sendColdEmail(req, res) {
                 sent: new Date().toISOString()
             }
         })
-    
+
         await lead.save()
+
         res.status(200).json({
             success: true,
-            messageId: result.messageId,
-            reason: evaluated.reason
+            messageId: result.messageId
         })
-    
+
     } catch (error) {
         console.log("Error:", error)
         res.status(500).json({ error: error.message })

@@ -81,7 +81,7 @@ export async function generateEmail(lead) {
         
         <div style="background:#4F46E5;padding:20px 28px;">
           <span style="color:#ffffff;font-size:18px;font-weight:bold;">Hamro Aadhiyan</span>
-          <span style="color:#c7d2fe;font-size:13px;margin-left:8px;">for BSC.CSIT students</span>
+          <span style="color:#c7d2fe;font-size:13px;margin-left:8px;">for BSC.CSIT Community</span>
         </div>
     
         <div style="padding:28px;">
@@ -119,6 +119,7 @@ export async function generateEmail(lead) {
     - NO placeholders like "[FIRST LINE]" in output
     - ONLY valid JSON
     - Fill ALL placeholders with real personalized content
+    - NEVER use markdown links like [text](url) — ALWAYS use proper HTML <a> tags
     
     FORMAT:
     {
