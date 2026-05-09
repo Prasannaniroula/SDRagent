@@ -77,8 +77,18 @@ function handleCSV(e) {
     reader.onload = (e) => {
         const text = e.target.result
         const lines = text.split('\n').filter(line => line.trim())
-        const headers = lines[0].split(',').map(h => h.trim())
         
+        // Validate headers
+        const headers = lines[0].split(',').map(h => h.trim().toLowerCase())
+        const requiredHeaders = ['name', 'role', 'goal', 'email']
+        const missingHeaders = requiredHeaders.filter(h => !headers.includes(h))
+
+        if (missingHeaders.length > 0) {
+            setError(`❌ CSV is missing columns: ${missingHeaders.join(', ')}`)
+            setCsvLeads([])
+            return
+        }
+
         const leads = lines.slice(1).map(line => {
             const values = line.split(',').map(v => v.trim())
             const lead = {}
@@ -88,6 +98,28 @@ function handleCSV(e) {
             return lead
         }).filter(lead => lead.email)
 
+        // Validate each row
+        const invalidLeads = leads.filter(lead => 
+            !lead.name || !lead.role || !lead.goal || !lead.email
+        )
+
+        if (invalidLeads.length > 0) {
+            setError(`❌ ${invalidLeads.length} rows have missing fields!`)
+            setCsvLeads([])
+            return
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        const invalidEmails = leads.filter(lead => !emailRegex.test(lead.email))
+
+        if (invalidEmails.length > 0) {
+            setError(`❌ Invalid emails found: ${invalidEmails.map(l => l.email).join(', ')}`)
+            setCsvLeads([])
+            return
+        }
+
+        setError(null)
         setCsvLeads(leads)
     }
     reader.readAsText(file)
