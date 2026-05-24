@@ -1,5 +1,5 @@
 import express from 'express'
-import { sendColdEmail, generateEmailPreview } from '../controllers/emailController.js'
+import { sendColdEmail, generateEmailPreview } from '../controllers/emailcontroller.js'
 
 const router = express.Router()
 router.post('/send', sendColdEmail)
