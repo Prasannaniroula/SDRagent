@@ -1,3 +1,5 @@
+import Lead from '../models/Lead.js'
+
 export async function updateEmailRecord(event) {
     const eventType = event.event
     const rawMessageId = event['message-id'] || event['MessageId']
