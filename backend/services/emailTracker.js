@@ -9,18 +9,30 @@ export async function updateEmailRecord(event) {
 
     console.log(`[Webhook] event=${eventType} | messageId=${messageId} | email=${email}`)
 
-    // For unique_opened and click events use email to find lead
+    // Skip request events
+    if (eventType === 'request') return
+
     let lead = null
 
+    // Try finding by messageId first (normal format)
     if (messageId && !messageId.startsWith('an#')) {
         lead = await Lead.findOne({ 'status.messageId': messageId })
     }
 
-    // Fallback — search by email if messageId not found
+    // Fallback by email
     if (!lead && email) {
-        lead = await Lead.findOne({ 
+        lead = await Lead.findOne({
             email: email,
-            'status.sent': true 
+            'status.sent': true
+        }).sort({ createdAt: -1 })
+    }
+
+    // Fallback by messageId in body (for click events)
+    if (!lead && messageId && messageId.startsWith('an#')) {
+        // Try to find most recently sent lead
+        lead = await Lead.findOne({
+            'status.sent': true,
+            'status.delivered': true
         }).sort({ createdAt: -1 })
     }
 
@@ -30,8 +42,6 @@ export async function updateEmailRecord(event) {
     }
 
     switch (eventType) {
-        case 'request':
-            break
         case 'delivered':
             lead.status.delivered = true
             lead.timestamps.delivered = ts
@@ -69,5 +79,5 @@ export async function updateEmailRecord(event) {
     }
 
     await lead.save()
-    console.log(`Record updated for messageId=${messageId} event=${eventType}`)
+    console.log(`✅ Record updated | event=${eventType} | lead=${lead.email}`)
 }
