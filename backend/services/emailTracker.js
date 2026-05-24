@@ -2,7 +2,8 @@ import Lead from '../models/Lead.js'
 
 export async function updateEmailRecord(event) {
     const eventType = event.event
-    const messageId = event['message-id'] || event['MessageId']
+    const rawMessageId = event['message-id'] || event['MessageId']
+    const messageId = rawMessageId ? rawMessageId.replace(/^<|>$/g, '') : null
     const ts = event.date || new Date().toISOString()
 
     console.log(`[Webhook] event=${eventType} | messageId=${messageId}`)
