@@ -77,8 +77,7 @@ function handleCSV(e) {
     reader.onload = (e) => {
         const text = e.target.result
         const lines = text.split('\n').filter(line => line.trim())
-        
-        // Validate headers
+
         const headers = lines[0].split(',').map(h => h.trim().toLowerCase())
         const requiredHeaders = ['name', 'role', 'goal', 'email']
         const missingHeaders = requiredHeaders.filter(h => !headers.includes(h))
@@ -98,23 +97,23 @@ function handleCSV(e) {
             return lead
         }).filter(lead => lead.email)
 
-        // Validate each row
+
         const invalidLeads = leads.filter(lead => 
             !lead.name || !lead.role || !lead.goal || !lead.email
         )
 
         if (invalidLeads.length > 0) {
-            setError(`❌ ${invalidLeads.length} rows have missing fields!`)
+            setError(` ${invalidLeads.length} rows have missing fields!`)
             setCsvLeads([])
             return
         }
 
-        // Validate email format
+
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
         const invalidEmails = leads.filter(lead => !emailRegex.test(lead.email))
 
         if (invalidEmails.length > 0) {
-            setError(`❌ Invalid emails found: ${invalidEmails.map(l => l.email).join(', ')}`)
+            setError(` Invalid emails found: ${invalidEmails.map(l => l.email).join(', ')}`)
             setCsvLeads([])
             return
         }
@@ -153,7 +152,6 @@ async function handleBulkSend() {
         }
         setBulkProgress(i + 1)
 
-        // Wait 3 seconds between emails to avoid rate limit
         if (i < csvLeads.length - 1) {
             await new Promise(resolve => setTimeout(resolve, 30000))
         }
@@ -197,7 +195,7 @@ return (
             <>
             
 
-            {/* Step Indicator */}
+
         <div className="flex items-center gap-2 mb-8">
             {['Lead Details', 'Preview', 'Sent!'].map((label, i) => (
                 <div key={i} className="flex items-center gap-2">
@@ -212,7 +210,7 @@ return (
             ))}
         </div>
 
-        {/* Step 1 - Lead Details Form */}
+   
         {step === 1 && (
             <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-sm border ${isDark ? 'border-gray-700' : 'border-gray-100'} p-6`}>
                 <div className="flex flex-col gap-4">
@@ -253,7 +251,6 @@ return (
             </div>
         )}
 
-        {/* Step 2 - Preview */}
         {step === 2 && (
             <div className="flex flex-col gap-4">
                 <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-2xl shadow-sm border p-4`}>
@@ -265,7 +262,7 @@ return (
                     </p>
                 </div>
 
-                {/* Email Preview */}
+
                 <div className="rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
                     <iframe
                         srcDoc={preview}
@@ -290,13 +287,13 @@ return (
                         onClick={handleSend}
                         disabled={loading}
                         className="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 disabled:opacity-50 transition">
-                        {loading ? 'Sending...' : '🚀 Send Email'}
+                        {loading ? 'Sending...' : ' Send Email'}
                     </button>
                 </div>
             </div>
         )}
 
-        {/* Step 3 - Success */}
+
         {step === 3 && (
             <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-2xl shadow-sm border p-8 text-center`}>
                 <div className="text-5xl mb-4">🎉</div>
@@ -323,12 +320,12 @@ return (
             </>
         )}
 
-        {/* bulk tab */}
+
 
         {activeTab === 'bulk' && (
     <div className="flex flex-col gap-6">
 
-        {/* Upload CSV */}
+                    {/* //upload CSV */}
         <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-2xl shadow-sm border p-6`}>
             <h3 className={`text-lg font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>
                 Upload CSV File
@@ -355,7 +352,6 @@ return (
 </label>
         </div>
 
-        {/* Leads Preview */}
         {csvLeads.length > 0 && !bulkLoading && bulkResults.length === 0 && (
             <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-2xl shadow-sm border p-6`}>
                 <h3 className={`text-lg font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-800'}`}>
@@ -380,12 +376,11 @@ return (
                 <button
                     onClick={handleBulkSend}
                     className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition">
-                    🚀 Send All {csvLeads.length} Emails
+                     Send All {csvLeads.length} Emails
                 </button>
             </div>
         )}
 
-        {/* Progress */}
         {bulkLoading && (
             <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-2xl shadow-sm border p-6`}>
                 <h3 className={`text-lg font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-800'}`}>
@@ -407,7 +402,6 @@ return (
             </div>
         )}
 
-        {/* Results */}
         {bulkResults.length > 0 && !bulkLoading && (
             <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-2xl shadow-sm border p-6`}>
                 <h3 className={`text-lg font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-800'}`}>
@@ -421,7 +415,7 @@ return (
                                 <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{result.email}</p>
                             </div>
                             <span className={`text-xs px-2 py-1 rounded-lg font-medium ${result.success ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                                {result.success ? '✅ Sent' : '❌ Failed'}
+                                {result.success ? 'Sent' : 'Failed'}
                             </span>
                         </div>
                     ))}
