@@ -25,6 +25,8 @@ export async function sendColdEmail(req, res) {
         const subject = `Quick help for ${role}`
         const result = await sendEmail(email, name, subject, emailToSend)
 
+        console.log("MessageId from Brevo:", result.messageId)
+
         const lead = new Lead({
             name,
             email,
@@ -40,6 +42,7 @@ export async function sendColdEmail(req, res) {
                 sent: new Date().toISOString()
             }
         })
+        console.log("Saving messageId:", result.messageId ? result.messageId.replace(/^<|>$/g, '') : null)
 
         await lead.save()
 
