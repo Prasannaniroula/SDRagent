@@ -34,7 +34,7 @@ export async function sendColdEmail(req, res) {
             body: emailToSend,
             status: {
                 sent: result.success,
-                messageId: result.messageId
+                messageId: result.messageId ? result.messageId.replace(/^<|>$/g, '') : null
             },
             timestamps: {
                 sent: new Date().toISOString()
