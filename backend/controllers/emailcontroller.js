@@ -14,8 +14,6 @@ export async function sendColdEmail(req, res) {
 
     try {
         let emailToSend = finalEmail
-
-        // If no finalEmail provided generate a new one
         if (!emailToSend) {
             const generated = await generateEmail({ name, role, goal })
             const evaluated = await evaluateEmail(generated.emails)
@@ -67,7 +65,7 @@ export async function generateEmailPreview(req, res) {
     }
 
     try {
-        // Step 1 - Generate 3 emails
+
         const generated = await generateEmail({ name, role, goal })
 
         // Step 2 - Evaluate and pick best email

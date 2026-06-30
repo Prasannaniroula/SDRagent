@@ -9,12 +9,11 @@ export async function updateEmailRecord(event) {
 
     console.log(`[Webhook] event=${eventType} | messageId=${messageId} | email=${email}`)
 
-    // Skip request events
     if (eventType === 'request') return
 
     let lead = null
 
-    // Try finding by messageId first (normal format)
+
     if (messageId && !messageId.startsWith('an#')) {
         lead = await Lead.findOne({ 'status.messageId': messageId })
     }
