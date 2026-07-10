@@ -7,6 +7,7 @@ import { connectDB } from './db.js'
 import metricsRouter from './routes/metricsRoute.js'
 import leadRouter from './routes/LeadRoute.js'
 import https from 'https'
+import promptRouter from './routes/promptRoute.js'
 
 dotenv.config()
 
@@ -30,6 +31,7 @@ app.use('/email',emailRouter)
 app.use('/webhook', webhookRouter)
 app.use('/metrics', metricsRouter)
 app.use('/leads', leadRouter)
+app.use('/settings/prompts', promptRouter)
 app.get('/', (req, res) => {
     res.json({ message: 'Server is running' })
 })

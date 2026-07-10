@@ -4,6 +4,7 @@ import Composer from './pages/Composer'
 import Leads from './pages/Leads'
 import Sidebar from './components/Sidebar'
 import { useTheme } from './Context/ThemeContext'
+import PromptSettings from './pages/PromptSettings'
 
 export default function App() {
   const { isDark } = useTheme()
@@ -15,6 +16,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/composer" element={<Composer />} />
+          <Route path="/prompts" element={<PromptSettings />} />
           <Route path="/leads" element={<Leads />} />
         </Routes>
       </main>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, Mail, Users, Menu, X, Sun, Moon } from "lucide-react";
+import { LayoutDashboard, Mail, Users, Menu, X, Sun, Moon, Sliders } from "lucide-react";
 import { useTheme } from "../Context/ThemeContext";
 
 export default function Sidebar() {
@@ -11,6 +11,7 @@ export default function Sidebar() {
     { to: "/", icon: <LayoutDashboard size={18} />, label: "Dashboard" },
     { to: "/composer", icon: <Mail size={18} />, label: "Composer" },
     { to: "/leads", icon: <Users size={18} />, label: "Leads" },
+    { to: "/prompts", icon: <Sliders size={18} />, label: "Prompt Settings" },
   ];
 
   const NavLinks = () => (

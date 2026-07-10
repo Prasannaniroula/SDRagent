@@ -1,5 +1,7 @@
 import Groq from 'groq-sdk'
 import dotenv from 'dotenv'
+import PromptSettings from '../models/PromptsSettings.js'
+import { DEFAULT_EVALUATOR_PROMPT } from '../prompts/defaultPrompts.js'
 
 dotenv.config()
 
@@ -7,44 +9,27 @@ const groq = new Groq({
     apiKey : process.env.GROQ_API_KEY
 })
 
-export async function evaluateEmail(emails){
-    const prompt = `
-You are an expert SDR email evaluator.
-
-You must select the BEST email from the 3 versions below and return it EXACTLY as-is.
-
-SELECTION CRITERIA:
-- Most personalized and human feeling
-- No generic marketing language
-- Clear and specific pain point
-- Soft and curiosity based CTA
-- Best overall tone for a BSC.CSIT student in Nepal
-
-CRITICAL RULES:
-- Output must be CLEAN HTML email only
-- NO placeholders like "(button here)" or "..."
-- NO explanations or comments
-- NO markdown
-- NO extra text outside JSON
-- Preserve HTML structure exactly as given
-
-Emails to evaluate:
-
-Professional:
-${emails.professional}
-
-Humorous:
-${emails.humorous}
-
-Concise:
-${emails.concise}
-
-Return ONLY valid JSON:
-{
-  "final_email": "<clean full HTML email>",
-  "reason": "one line why you picked this one"
+function fillTemplate(template, emails) {
+    return template
+        .replaceAll('{{professional}}', emails.professional ?? '')
+        .replaceAll('{{humorous}}', emails.humorous ?? '')
+        .replaceAll('{{concise}}', emails.concise ?? '')
 }
-`
+
+async function getEvaluatorPromptTemplate() {
+    try {
+        const settings = await PromptSettings.findOne({ key: 'default' })
+        if (settings?.evaluatorPrompt) return settings.evaluatorPrompt
+    } catch (error) {
+        console.log('Could not load custom evaluator prompt, falling back to default:', error.message)
+    }
+    return DEFAULT_EVALUATOR_PROMPT
+}
+
+export async function evaluateEmail(emails){
+    const template = await getEvaluatorPromptTemplate()
+    const prompt = fillTemplate(template, emails)
+
 const response = await groq.chat.completions.create({
     model: "llama-3.3-70b-versatile",
     messages:[
