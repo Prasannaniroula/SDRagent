@@ -1,11 +1,13 @@
-import mongoose from 'mongoose'
+import mongoose, { set } from 'mongoose'
+import {encrypt, decrypt} from '../services/encryption.js'
+
 const leadSchema = new mongoose.Schema({
     name: String,
-    email: String,
+    email: {type:String, set:encrypt, get:decrypt},
     role: String,
     goal: String,
     subject: String,
-    body: String,
+    body: {type:String, set:encrypt, get:decrypt},
     status: {
         sent: { type: Boolean, default: false },
         delivered: { type: Boolean, default: false },
@@ -26,6 +28,9 @@ const leadSchema = new mongoose.Schema({
         bounced: { type: String, default: null },
         spam: { type: String, default: null }
     }
-}, { timestamps: true })
+}, { timestamps: true,
+    toJSON :{getters:true},
+    toObject:{getters:true}
+ })
 
 export default mongoose.model('Lead', leadSchema)

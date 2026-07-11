@@ -8,6 +8,8 @@ import metricsRouter from './routes/metricsRoute.js'
 import leadRouter from './routes/LeadRoute.js'
 import https from 'https'
 import promptRouter from './routes/promptRoute.js'
+import campaignRouter from './routes/campaignRoute.js'
+import { resumeCampaigns } from './services/campaignProcessor.js'
 
 dotenv.config()
 
@@ -31,6 +33,7 @@ app.use('/email',emailRouter)
 app.use('/webhook', webhookRouter)
 app.use('/metrics', metricsRouter)
 app.use('/leads', leadRouter)
+app.use('/campaign', campaignRouter)
 app.use('/settings/prompts', promptRouter)
 app.get('/', (req, res) => {
     res.json({ message: 'Server is running' })
@@ -39,7 +42,9 @@ app.get('/health', (req, res) => {
     res.json({ status: 'alive' })
 })
 
-connectDB()
+connectDB().then(() => {
+    resumeCampaigns()
+})
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`)
 })

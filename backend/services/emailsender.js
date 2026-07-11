@@ -13,10 +13,20 @@ export async function sendEmail(to, name, subject, htmlContent) {
             to: [{ email: to, name: name }],
             sender: {
                 name: "Hamro Aadhiyan",
-                email: "anything@prasannaniroula.com.np"
+                email: "hello@prasannaniroula.com.np"
+            },
+            replyTo:{
+                name:"Prasanna Niroula",
+                email:"Prasannaniroula987@gmail.com"
             },
             subject: subject,
-            htmlContent: htmlContent
+            htmlContent: htmlContent,
+            attachment:[
+                {
+                    url:"https://prasannaniroula.com.np/PrasannaResume.pdf",
+                    name:"Prasanna_Niroula_CV.pdf"
+                }
+            ]
         })
 
         return {

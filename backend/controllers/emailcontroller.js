@@ -20,7 +20,7 @@ export async function sendColdEmail(req, res) {
             emailToSend = evaluated.final_email
         }
 
-        const subject = `Quick help for ${role}`
+        const subject = "Internship inquiry - Prasanna Niroula(Frontend / Fullstack)"
         const result = await sendEmail(email, name, subject, emailToSend)
 
         console.log("MessageId from Brevo:", result.messageId)
