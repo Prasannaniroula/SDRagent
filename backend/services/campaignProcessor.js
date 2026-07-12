@@ -94,3 +94,36 @@ export async function resumeCampaigns() {
         console.log('Failed to resume campaigns:', err)
     }
 }
+
+let consecutiveFailures = 0
+ for (const lead of campaign.leads){
+    if(lead.status !== 'pending') continue
+
+    const current = await Campaign.findById(campaignId).select('status')
+    if(!current || current.status !== 'running'){
+        console.log(`Campaign ${campaignId} stopped(${current?.status})`)
+        return
+    }
+    try{
+        lead.status = 'sent'
+        consecutiveFailures = 0
+    }
+    catch(err){
+        lead.status ='failed'
+        lead.error = err.message
+        consecutiveFailures++
+    }
+    campaign.progress = campaign.leads.filter(l=> l.status !== 'pending').length
+    await campaign.save()
+
+    if(consecutiveFailures >= 5){
+        console.log(`Campaign ${campaignId} autocancelled after 5 consecutives failures`)
+        campaign.status = 'cancelled'
+        await campaign.save()
+        return
+    }
+    const hasPending = campaign.leads.some(l=> l.status === 'pending')
+    if(hasPending){
+        await new Promise(resolve => setTimeout(resolve, DELAY_MS))
+    }
+}

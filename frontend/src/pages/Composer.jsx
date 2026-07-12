@@ -97,6 +97,9 @@ export default function Composer() {
       setLoading(false);
     }
   }
+  function removeLead(index){
+    setCsvLeads(prev => prev.filter((_, i)=> i !== index))
+  }
 
   function handleCSV(e) {
     const file = e.target.files[0];
@@ -642,6 +645,13 @@ export default function Composer() {
                     >
                       {lead.role}
                     </span>
+                    <div className="flex items-center gap-2">
+                    <button 
+                    onClick={()=> removeLead(i)}
+                    className="ml-2 text-xs px-3 py-1.5 rounded-lg font-medium bg-red-100 text-red-600 hover-bg-red-200 transition">
+                      Remove
+                    </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -677,7 +687,7 @@ export default function Composer() {
             ⏱ Estimated time remaining: {(campaign.total - campaign.progress) * 30} seconds
         </p>
         <p className={`text-xs mb-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-            ✅ Running on the server — safe to switch tabs or close this page
+            Running on the server — safe to switch tabs or close this page
         </p>
         <div className={`w-full h-3 rounded-full ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
             <div
@@ -685,6 +695,19 @@ export default function Composer() {
                 style={{ width: `${(campaign.progress / campaign.total) * 100}%` }}
             />
         </div>
+        <button 
+        onClick={async () => {
+          if(!confirm('Stop this campaign ? Leads not yet sent will be skipped.')) return
+          try{
+            await axios.post(`${import.meta.env.VITE_API_URL}/campaign/${campaign.campaignId}/cancel`)
+            setCampaign(res.data)
+          }catch(err){}
+        }}
+        className="w-full mt-4 bg-red-600 text-white py-3 rounded-xl font-bold hover:bg-red-700 transition"
+        >
+          Stop Campaign
+        </button>
+
         <div className="flex flex-col gap-2 mt-4">
             {campaign.leads.filter(l => l.status !== 'pending').map((lead, i) => (
                 <div key={i} className={`flex justify-between items-center p-3 rounded-xl ${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>

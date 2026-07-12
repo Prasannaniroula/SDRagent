@@ -79,6 +79,22 @@ export async function getLatestCampaign(req, res) {
         res.status(500).json({ error: error.message })
     }
 }
+export async function cancelCampaign(req,res){
+    try{
+        const campaign = await Campaign.findById(req.params.id)
+        if(!campaign){
+            return res.status(404).json({error:'campaign  no found'})
+        }
+        if(campaign.status !== 'running'){
+            return res.status(400).json({error:'campaign is not running'})
+        }
+        campaign.status ='cancelled'
+        await campaign.save()
+        res.status(200).json({success:true})
+    }catch(error){
+        res.status(500).json({error:error.message})
+    }
+}
 
 function formatCampaign(campaign) {
     return {

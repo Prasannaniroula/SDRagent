@@ -3,7 +3,7 @@ import mongoose from 'mongoose'
 const campaignSchema = new mongoose.Schema({
     status: {
         type: String,
-        enum: ['running', 'completed'],
+        enum: ['running', 'completed','cancelled'],
         default: 'running'
     },
     total: { type: Number, default: 0 },
