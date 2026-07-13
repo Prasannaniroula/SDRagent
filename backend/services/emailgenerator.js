@@ -30,7 +30,7 @@ export async function generateEmail(lead) {
   const prompt = fillTemplate(template, lead)
 
 const response = await groq.chat.completions.create({
-    model:'llama-3.3-70b-versatile',
+    model:'openai/gpt-oss-120b',
     messages:[
         {role:'system',content:'Return only valid json'},
         {role:'user',content:prompt}
