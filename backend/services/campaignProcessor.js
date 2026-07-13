@@ -113,7 +113,6 @@ async function runCampaign(campaignId) {
                 console.log(`Campaign ${campaignId} stopped (${current?.status})`)
                 return
             }
-
             try {
                 const generated = await generateEmail(lead)
                 const evaluated = await evaluateEmail(generated.emails)
