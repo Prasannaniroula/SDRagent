@@ -35,7 +35,9 @@ const response = await groq.chat.completions.create({
         {role:'system',content:'Return only valid json'},
         {role:'user',content:prompt}
     ],
-    temperature: 0.7 
+    temperature: 0.7 ,
+    response_format:{type:'json_object'},
+    reasoning_effort:'low'
 })
 
 const content = response.choices[0].message.content
