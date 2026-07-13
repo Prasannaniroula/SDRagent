@@ -95,35 +95,83 @@ export async function resumeCampaigns() {
     }
 }
 
-let consecutiveFailures = 0
- for (const lead of campaign.leads){
-    if(lead.status !== 'pending') continue
+async function runCampaign(campaignId) {
+    try {
+        const campaign = await Campaign.findById(campaignId)
+        if (!campaign || campaign.status !== 'running') return
 
-    const current = await Campaign.findById(campaignId).select('status')
-    if(!current || current.status !== 'running'){
-        console.log(`Campaign ${campaignId} stopped(${current?.status})`)
-        return
-    }
-    try{
-        lead.status = 'sent'
-        consecutiveFailures = 0
-    }
-    catch(err){
-        lead.status ='failed'
-        lead.error = err.message
-        consecutiveFailures++
-    }
-    campaign.progress = campaign.leads.filter(l=> l.status !== 'pending').length
-    await campaign.save()
+        console.log(`Campaign ${campaignId} started (${campaign.leads.length} leads)`)
 
-    if(consecutiveFailures >= 5){
-        console.log(`Campaign ${campaignId} autocancelled after 5 consecutives failures`)
-        campaign.status = 'cancelled'
+        let consecutiveFailures = 0
+
+        for (const lead of campaign.leads) {
+            if (lead.status !== 'pending') continue
+
+            // Check if the user cancelled the campaign
+            const current = await Campaign.findById(campaignId).select('status')
+            if (!current || current.status !== 'running') {
+                console.log(`Campaign ${campaignId} stopped (${current?.status})`)
+                return
+            }
+
+            try {
+                const generated = await generateEmail(lead)
+                const evaluated = await evaluateEmail(generated.emails)
+                const emailToSend = evaluated.final_email
+
+                const subject = `Internship inquiry — Prasanna Niroula (Full-Stack Developer)`
+                const result = await sendEmail(lead.email, lead.name, subject, emailToSend)
+
+                if (!result.success) {
+                    throw new Error(result.error || 'Email sending failed')
+                }
+
+                await new Lead({
+                    name: lead.name,
+                    email: lead.email,
+                    role: lead.role,
+                    goal: lead.goal,
+                    subject,
+                    body: emailToSend,
+                    status: {
+                        sent: true,
+                        messageId: result.messageId ? result.messageId.replace(/^<|>$/g, '') : null
+                    },
+                    timestamps: {
+                        sent: new Date().toISOString()
+                    }
+                }).save()
+
+                lead.status = 'sent'
+                consecutiveFailures = 0
+                console.log(`Campaign ${campaignId}: sent to ${lead.email}`)
+            } catch (err) {
+                lead.status = 'failed'
+                lead.error = err.message
+                consecutiveFailures++
+                console.log(`Campaign ${campaignId}: failed for ${lead.email} —`, err.message)
+            }
+
+            campaign.progress = campaign.leads.filter(l => l.status !== 'pending').length
+            await campaign.save()
+
+            if (consecutiveFailures >= 5) {
+                console.log(`Campaign ${campaignId} auto-cancelled after 5 consecutive failures`)
+                campaign.status = 'cancelled'
+                await campaign.save()
+                return
+            }
+
+            const hasPending = campaign.leads.some(l => l.status === 'pending')
+            if (hasPending) {
+                await new Promise(resolve => setTimeout(resolve, DELAY_MS))
+            }
+        }
+
+        campaign.status = 'completed'
         await campaign.save()
-        return
-    }
-    const hasPending = campaign.leads.some(l=> l.status === 'pending')
-    if(hasPending){
-        await new Promise(resolve => setTimeout(resolve, DELAY_MS))
+        console.log(`Campaign ${campaignId} completed`)
+    } catch (err) {
+        console.log(`Campaign ${campaignId} processing error:`, err)
     }
 }
